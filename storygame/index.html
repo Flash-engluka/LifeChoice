@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>생선</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Malgun Gothic', sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .screen { display: none; width: 100%; }
+    .screen.active { display: flex; }
+
+    /* ── 메뉴 ── */
+    #menu-screen {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      min-height: 100vh;
+    }
+    .title {
+      font-size: 3rem;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 0 20px rgba(255, 80, 80, 0.5);
+      letter-spacing: 0.1em;
+    }
+    .subtitle { color: #555; font-size: 0.95rem; margin-top: 8px; }
+    .menu-buttons { display: flex; gap: 20px; }
+
+    .btn {
+      padding: 14px 36px;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.05rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .btn-red   { background: #8b1a1a; color: #f5c6c6; }
+    .btn-red:hover   { background: #c0392b; }
+    .btn-dark  { background: #1a1a24; color: #8888aa; border: 1px solid #2a2a3a; }
+    .btn-dark:hover  { background: #22222e; color: #aaaacc; }
+
+    /* ── 1인용 화면 ── */
+    #game1p-screen {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .game-container { max-width: 700px; width: 100%; }
+    .turn-badge {
+      text-align: right;
+      color: #444;
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+    }
+    .story-box {
+      background: #0e0e16;
+      border: 1px solid #1c1c28;
+      border-radius: 8px;
+      padding: 40px;
+      margin-bottom: 28px;
+      min-height: 180px;
+      line-height: 1.95;
+      font-size: 1rem;
+    }
+    .choices { display: flex; gap: 14px; }
+    .choice-btn {
+      flex: 1;
+      padding: 18px 20px;
+      border: 1px solid #222230;
+      border-radius: 6px;
+      background: #0e0e16;
+      color: #ccccdd;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
+      text-align: left;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .choice-btn:hover { border-color: #8b1a1a; background: #130d0d; }
+    .choice-key {
+      display: block;
+      font-size: 0.7rem;
+      color: #555;
+      margin-bottom: 6px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── 2인용 화면 ── */
+    #game2p-screen { flex-direction: row; min-height: 100vh; width: 100%; }
+
+    .player-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 28px 22px;
+    }
+    .player-panel.p1-panel { border-right: 1px solid #111118; }
+
+    .player-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #111118;
+    }
+    .player-name { font-weight: bold; font-size: 1rem; }
+    .player-name.p1 { color: #c0392b; }
+    .player-name.p2 { color: #2980b9; }
+    .player-turn { color: #444; font-size: 0.8rem; }
+
+    .player-story {
+      flex: 1;
+      background: #0e0e16;
+      border: 1px solid #111118;
+      border-radius: 6px;
+      padding: 22px;
+      margin-bottom: 18px;
+      line-height: 1.85;
+      font-size: 0.92rem;
+    }
+    .player-choices { display: flex; flex-direction: column; gap: 10px; }
+    .pchoice-btn {
+      padding: 12px 16px;
+      border: 1px solid #1a1a24;
+      border-radius: 6px;
+      background: #0c0c14;
+      color: #bbbbd0;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.88rem;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: border-color 0.15s;
+    }
+    .pchoice-btn.p1:hover { border-color: #8b1a1a; }
+    .pchoice-btn.p2:hover { border-color: #1a5276; }
+    .key-badge {
+      background: #111118;
+      border: 1px solid #222;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 0.7rem;
+      color: #666;
+      flex-shrink: 0;
+    }
+
+    .ending-status {
+      text-align: center;
+      padding: 16px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+    }
+    .ended-dead     { background: #130808; color: #c0392b; border: 1px solid #4a1010; }
+    .ended-survived { background: #081308; color: #27ae60; border: 1px solid #104a10; }
+
+    /* ── 결과 화면 ── */
+    #result1p-screen,
+    #result2p-screen {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 28px;
+    }
+    .result-box {
+      background: #0e0e16;
+      border: 1px solid #1c1c28;
+      border-radius: 10px;
+      padding: 40px 56px;
+      text-align: center;
+    }
+    .result-heading { font-size: 2.2rem; font-weight: bold; }
+    .r-survived { color: #27ae60; }
+    .r-dead     { color: #c0392b; }
+    .r-winner   { color: #f1c40f; }
+    .r-draw     { color: #888; }
+    .result-sub { color: #555; font-size: 0.9rem; margin-top: 10px; }
+
+    .result-players {
+      display: flex;
+      gap: 36px;
+      margin-top: 20px;
+      justify-content: center;
+    }
+    .result-player { text-align: center; }
+    .result-player-name { font-weight: bold; font-size: 0.9rem; margin-bottom: 4px; }
+    .result-player-detail { color: #555; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+
+<!-- 메뉴 -->
+<div id="menu-screen" class="screen active">
+  <div style="text-align:center">
+    <div class="title">생존 선택</div>
+    <div class="subtitle">당신의 선택이 운명을 결정한다</div>
+  </div>
+  <div class="menu-buttons">
+    <button class="btn btn-red"  onclick="startGame('1p')">1인용</button>
+    <button class="btn btn-dark" onclick="startGame('2p')">2인용</button>
+  </div>
+</div>
+
+<!-- 1인용 게임 -->
+<div id="game1p-screen" class="screen">
+  <div class="game-container">
+    <div class="turn-badge">턴 <span id="turn-1p">1</span></div>
+    <div class="story-box" id="story-1p"></div>
+    <div class="choices" id="choices-1p">
+      <button class="choice-btn" onclick="choose1P('A')">
+        <span class="choice-key">A  [Z]</span>
+        <span id="text-a-1p"></span>
+      </button>
+      <button class="choice-btn" onclick="choose1P('B')">
+        <span class="choice-key">B  [X]</span>
+        <span id="text-b-1p"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 2인용 게임 -->
+<div id="game2p-screen" class="screen">
+  <!-- P1 -->
+  <div class="player-panel p1-panel">
+    <div class="player-header">
+      <span class="player-name p1">Player 1</span>
+      <span class="player-turn">턴 <span id="turn-p1">1</span></span>
+    </div>
+    <div class="player-story" id="story-p1"></div>
+    <div class="player-choices" id="choices-p1">
+      <button class="pchoice-btn p1" onclick="choose2P(1,'A')">
+        <span class="key-badge">Z</span><span id="text-a-p1"></span>
+      </button>
+      <button class="pchoice-btn p1" onclick="choose2P(1,'B')">
+        <span class="key-badge">X</span><span id="text-b-p1"></span>
+      </button>
+    </div>
+  </div>
+  <!-- P2 -->
+  <div class="player-panel">
+    <div class="player-header">
+      <span class="player-name p2">Player 2</span>
+      <span class="player-turn">턴 <span id="turn-p2">1</span></span>
+    </div>
+    <div class="player-story" id="story-p2"></div>
+    <div class="player-choices" id="choices-p2">
+      <button class="pchoice-btn p2" onclick="choose2P(2,'A')">
+        <span class="key-badge">N</span><span id="text-a-p2"></span>
+      </button>
+      <button class="pchoice-btn p2" onclick="choose2P(2,'B')">
+        <span class="key-badge">M</span><span id="text-b-p2"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 1인용 결과 -->
+<div id="result1p-screen" class="screen">
+  <div class="result-box">
+    <div class="result-heading" id="r1p-heading"></div>
+    <div class="result-sub"    id="r1p-sub"></div>
+  </div>
+  <button class="btn btn-dark" onclick="showMenu()">메뉴로</button>
+</div>
+
+<!-- 2인용 결과 -->
+<div id="result2p-screen" class="screen">
+  <div class="result-box">
+    <div class="result-heading" id="r2p-heading"></div>
+    <div class="result-players">
+      <div class="result-player">
+        <div class="result-player-name" style="color:#c0392b">Player 1</div>
+        <div class="result-player-detail" id="r2p-p1"></div>
+      </div>
+      <div class="result-player">
+        <div class="result-player-name" style="color:#2980b9">Player 2</div>
+        <div class="result-player-detail" id="r2p-p2"></div>
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-dark" onclick="showMenu()">메뉴로</button>
+</div>
+
+<script>
+// ================================================================
+//  STORY DATA
+//
+//  페이지 구조:
+//    type     : 'story' | 'death' | 'survival'
+//    text     : 화면에 표시될 이야기 텍스트
+//    choiceA  : { text, next }   ← type === 'story' 일 때만
+//    choiceB  : { text, next }   ← type === 'story' 일 때만
+//
+//  이야기 추가 방법:
+//    1. PAGES 객체에 새 페이지 ID와 내용을 추가한다.
+//    2. 시작 페이지로 쓰려면 START_IDS 배열에 ID를 추가한다.
+// ================================================================
+
+const PAGES = {
+
+  // ════════════════════════════════════════════════════════════
+  //  시작 페이지 (랜덤으로 하나 선택)
+  // ════════════════════════════════════════════════════════════
+
+  'start_1': {
+    type: 'story',
+    text: '어두운 지하 벙커에서 눈을 떴다. 귀청이 찢어질 듯한 경보음이 울려 퍼진다. 벽 모니터에 "외부 위험: 생물학적 오염 감지"라는 붉은 글씨가 깜박인다. 녹슨 철문 너머에서 발소리가 들려온다.',
+    choiceA: { text: '철문을 열어 발소리의 주인공을 확인한다', next: 'mid_1a' },
+    choiceB: { text: '벙커 안을 뒤져 생존 물자를 찾는다',      next: 'mid_1b' },
+  },
+  'start_2': {
+    type: 'story',
+    text: '폭풍이 몰아치는 한밤중, 고립된 산장에서 낯선 목소리가 들린다. "살아있는 사람 있어요?" 창문에 손전등 불빛이 비친다. 옆에는 식칼 하나와 구급상자가 있다.',
+    choiceA: { text: '"여기 있어요!" 하고 응답한다', next: 'mid_2a' },
+    choiceB: { text: '불을 끄고 조용히 숨는다',      next: 'mid_2b' },
+  },
+  'start_3': {
+    type: 'story',
+    text: '기억이 없다. 눈을 뜨니 낯선 도시 골목 바닥이다. 손에 피 묻은 쪽지가 있고 "48시간 안에 탑을 찾아라"라고 적혀 있다. 멀리서 사이렌이 가까워진다.',
+    choiceA: { text: '골목 밖으로 뛰쳐나간다',       next: 'mid_3a' },
+    choiceB: { text: '쪽지를 더 자세히 살펴본다', next: 'mid_3b' },
+  },
+  'start_4': {
+    type: 'story',
+    text: '병원 침대에서 눈을 떴다. 팔에 수액 줄이 꽂혀 있다. 창밖에서 폭발음이 들리고 복도에서 비명 소리가 난다. 비상 방송이 끊긴 채 사이렌만 울린다.',
+    choiceA: { text: '수액 줄을 뽑고 복도로 뛰쳐나간다', next: 'mid_4a' },
+    choiceB: { text: '침대 아래를 뒤져 뭔가를 찾는다',    next: 'mid_4b' },
+  },
+  'start_5': {
+    type: 'story',
+    text: '지하철이 터널 한복판에서 멈췄다. 전등이 꺼지고 비상등만 붉게 들어온다. 앞 칸에서 유리 깨지는 소리가 들린다. 승객들이 패닉 상태다.',
+    choiceA: { text: '앞 칸으로 이동해 상황을 확인한다',          next: 'mid_5a' },
+    choiceB: { text: '비상 레버를 당겨 문을 열고 선로로 내려간다', next: 'mid_5b' },
+  },
+  'start_6': {
+    type: 'story',
+    text: '연구소 지하 실험실에서 폭발이 일어났다. 실험복 차림으로 비상구를 찾고 있다. 계기판에 "격리 프로토콜 활성화 — 30분 후 소각"이라는 경고가 뜬다.',
+    choiceA: { text: '가장 가까운 비상구 문을 연다',        next: 'mid_6a' },
+    choiceB: { text: '제어실로 달려가 프로토콜을 해제한다', next: 'mid_6b' },
+  },
+
+  // ════════════════════════════════════════════════════════════
+  //  중간 페이지
+  // ════════════════════════════════════════════════════════════
+
+  // ── 시나리오 1: 벙커 ─────────────────────────────────────────
+  'mid_1a': {
+    type: 'story',
+    text: '문을 열자 누더기를 입은 노인이 쓰러져 있다. "…지하 3층… 출구가 있어… 하지만 괴물이…" 손에는 열쇠와 주사기가 쥐어져 있다.',
+    choiceA: { text: '이유를 묻느라 시간을 끈다',         next: 'death_waiting'    },
+    choiceB: { text: '열쇠를 받아 지하 3층으로 내려간다', next: 'survival_descent' },
+  },
+  'mid_1b': {
+    type: 'story',
+    text: '벙커를 뒤지자 방독면과 비상식량을 찾았다. 방독면을 쓰는 순간 전체가 암전된다. 비상등만 붉게 깜박이고 환기구에서 이상한 소리가 난다.',
+    choiceA: { text: '방독면을 쓰고 환기구를 막는다',     next: 'mid_1b2'       },
+    choiceB: { text: '식량만 챙겨 벙커 탈출을 시도한다', next: 'survival_vent' },
+  },
+  'mid_1b2': {
+    type: 'story',
+    text: '환기구를 막자 이상한 소리가 멎었다. 복도로 나서자 비상 탈출구 표지판이 보인다. 복도 중간에 쓰러진 군인이 있다.',
+    choiceA: { text: '군인의 장비를 뒤지다 시간을 낭비한다', next: 'death_trap'       },
+    choiceB: { text: '군인을 깨워 함께 탈출구로 간다',       next: 'survival_soldier' },
+  },
+
+  // ── 시나리오 2: 산장 ─────────────────────────────────────────
+  'mid_2a': {
+    type: 'story',
+    text: '문이 열리며 흠뻑 젖은 남자와 어린 소녀가 들어온다. 소녀 팔에 이상한 표식이 있다. "우리를 숨겨줘요." 창밖에서 차 헤드라이트가 번뜩인다.',
+    choiceA: { text: '소녀의 팔 표식이 수상해 추궁한다',  next: 'mid_2a2'          },
+    choiceB: { text: '묻지도 않고 둘을 숨기고 불을 끈다', next: 'survival_shelter' },
+  },
+  'mid_2a2': {
+    type: 'story',
+    text: '"실험체 번호예요. 탈출했어요." 그때 유리창이 깨진다. 세 명이 진입 중이다.',
+    choiceA: { text: '소녀를 안고 뒷문으로 달린다',      next: 'death_outnumbered'        },
+    choiceB: { text: '불을 끄고 옷장 안에 셋이 함께 숨는다', next: 'survival_escape_together' },
+  },
+  'mid_2b': {
+    type: 'story',
+    text: '불을 끄고 숨자 발소리가 멀어진다. 폭풍이 잦아들었다. 그런데 잠금장치를 걸어뒀는데도 산장 문이 삐걱거리며 열린다.',
+    choiceA: { text: '식칼을 들고 대항한다',        next: 'mid_2b2'         },
+    choiceB: { text: '침대 밑으로 기어들어간다', next: 'death_discovered' },
+  },
+  'mid_2b2': {
+    type: 'story',
+    text: '식칼을 들자 완전히 열린 문 너머 — 침묵. 폭풍에 잠금이 풀린 것이었다. 그런데 바닥에 당신 것이 아닌 발자국이 찍혀 있다.',
+    choiceA: { text: '발자국을 따라간다',                 next: 'death_followed' },
+    choiceB: { text: '문을 잠그고 날이 밝기를 기다린다', next: 'survival_dawn'   },
+  },
+
+  // ── 시나리오 3: 도시 골목 ─────────────────────────────────────
+  'mid_3a': {
+    type: 'story',
+    text: '텅 빈 광장, 도시 전체가 대피한 듯 고요하다. 광장 끝 탑 입구에 무장 대원들이 서 있다.',
+    choiceA: { text: '당당히 걸어가 쪽지를 보여준다', next: 'death_shot' },
+    choiceB: { text: '돌아서 다른 입구를 찾는다',      next: 'mid_3a2'   },
+  },
+  'mid_3a2': {
+    type: 'story',
+    text: '건물을 돌자 지하 환기구가 보인다. 기어들어가 침투했다. 복도에 보안 레이저 격자가 가로막고 있다.',
+    choiceA: { text: '타이밍을 맞춰 레이저를 통과한다', next: 'death_laser'   },
+    choiceB: { text: '보안실을 찾아 시스템을 끈다',     next: 'survival_hack' },
+  },
+  'mid_3b': {
+    type: 'story',
+    text: '쪽지 뒷면에 지도가 있다. 붉은 선 "빠른 길"과 파란 선 "안전한 길". 골목 입구에서 발소리가 가까워진다.',
+    choiceA: { text: '붉은 선 — 빠른 길로 달린다',    next: 'mid_3b2' },
+    choiceB: { text: '파란 선 — 안전한 길을 택한다', next: 'mid_3b3' },
+  },
+  'mid_3b2': {
+    type: 'story',
+    text: '빠른 길은 무너진 다리 위를 지난다. 반쯤 부서진 다리를 건너려는 순간 뒤에서 총성이 들린다.',
+    choiceA: { text: '전속력으로 다리를 건넌다',              next: 'survival_bridge' },
+    choiceB: { text: '다리 밑으로 뛰어내려 강을 헤엄친다', next: 'death_current'   },
+  },
+  'mid_3b3': {
+    type: 'story',
+    text: '안전한 길의 폐건물에서 다른 생존자를 만났다. 탑 내부 지도를 가지고 있다고 한다. "같이 가면 살 수 있어."',
+    choiceA: { text: '지도만 빼앗고 혼자 간다',        next: 'death_karma'   },
+    choiceB: { text: '지도를 함께 보며 같이 간다', next: 'survival_ally' },
+  },
+
+  // ── 시나리오 4: 병원 ─────────────────────────────────────────
+  'mid_4a': {
+    type: 'story',
+    text: '복도는 아수라장이었다. 간호사가 달려오며 외친다. "옥상으로 가요! 헬기가 와요!" 반대편 계단에서는 연기가 피어오른다.',
+    choiceA: { text: '간호사를 따라 옥상으로 달린다',          next: 'death_helicopter'       },
+    choiceB: { text: '연기 반대편 비상계단으로 1층을 향한다', next: 'survival_hospital_exit' },
+  },
+  'mid_4b': {
+    type: 'story',
+    text: '침대 아래에 전 환자의 가방이 있다. 손전등과 함께 "비상구 B2 창고"라고 적힌 메모가 들어 있다.',
+    choiceA: { text: '메모를 무시하고 창문으로 뛰어내린다', next: 'death_fall'       },
+    choiceB: { text: '메모를 따라 B2 창고로 내려간다',       next: 'survival_basement' },
+  },
+
+  // ── 시나리오 5: 지하철 ────────────────────────────────────────
+  'mid_5a': {
+    type: 'story',
+    text: '앞 칸은 텅 비어 있다. 깨진 창문으로 외부에서 진입한 흔적이 있다. 천장에 비상 탈출구가 보인다.',
+    choiceA: { text: '비상 탈출구를 열고 지붕으로 올라간다', next: 'survival_subway_roof' },
+    choiceB: { text: '깨진 창문 틈으로 빠져나간다',           next: 'death_electrocuted'  },
+  },
+  'mid_5b': {
+    type: 'story',
+    text: '선로에 내려서자 저 멀리 역 불빛이 보인다. 400m. 그런데 반대편 터널에서 열차 헤드라이트가 깜박이기 시작한다.',
+    choiceA: { text: '전속력으로 역을 향해 달린다',       next: 'death_train'          },
+    choiceB: { text: '선로 옆 보수용 대피 공간에 숨는다', next: 'survival_rail_shelter' },
+  },
+
+  // ── 시나리오 6: 연구소 ────────────────────────────────────────
+  'mid_6a': {
+    type: 'story',
+    text: '비상구 문 너머는 격리 구역이었다. 방호복 요원들이 총을 겨눈다. "손 들어!" 당신 손의 실험 데이터 USB가 눈에 띈다.',
+    choiceA: { text: '손을 들고 순순히 항복한다',       next: 'death_detained'     },
+    choiceB: { text: 'USB를 던지며 반대 방향으로 뛴다', next: 'survival_lab_escape' },
+  },
+  'mid_6b': {
+    type: 'story',
+    text: '제어실 컴퓨터에 비밀번호가 필요하다. 옆에 쓰러진 박사의 명찰에 생년월일이 적혀 있다.',
+    choiceA: { text: '생년월일로 비밀번호를 시도한다',     next: 'survival_protocol_off' },
+    choiceB: { text: '비밀번호 대신 전원을 강제로 끊는다', next: 'death_shutdown'        },
+  },
+
+  // ════════════════════════════════════════════════════════════
+  //  생존 엔딩
+  // ════════════════════════════════════════════════════════════
+  'survival_descent': {
+    type: 'survival',
+    text: '강철문 너머는 지상으로 이어지는 비밀 터널이었다. 짐승 소리는 환기팬 소음이었다. 새벽빛 속으로 걸어 나오자 깨끗한 공기가 폐를 채운다.\n\n생존했다.',
+  },
+  'survival_vent': {
+    type: 'survival',
+    text: '탈출 중 구조대와 마주쳤다. 오염 구역 밖은 아직 안전했다. 방독면 없이 뛰어나온 당신에게 구조대가 즉시 산소 마스크를 씌워줬다.\n\n생존했다.',
+  },
+  'survival_soldier': {
+    type: 'survival',
+    text: '군인이 눈을 떴다. 탈출 경로 지도를 가지고 있었다. 둘이 함께 지도를 따라 빠져나와 구조 헬기를 만났다.\n\n생존했다.',
+  },
+  'survival_shelter': {
+    type: 'survival',
+    text: '경찰이 떠나고 소녀가 당신 손을 잡는다. 사흘 뒤 사건이 마무리되고 당신은 증인 보호 프로그램에 들어갔다.\n\n생존했다.',
+  },
+  'survival_escape_together': {
+    type: 'survival',
+    text: '옷장 속에서 숨을 죽이며 기다렸다. 수색대가 떠난 새벽 3시, 셋은 조용히 산장을 빠져나왔다. 소녀가 처음으로 웃었다.\n\n생존했다.',
+  },
+  'survival_dawn': {
+    type: 'survival',
+    text: '날이 밝자 발자국의 주인은 이웃 마을에서 길을 잃은 사슴이었다. 폭풍도 그쳤다. 구조대와 함께 산을 내려왔다.\n\n생존했다.',
+  },
+  'survival_hack': {
+    type: 'survival',
+    text: '보안실에서 시스템을 종료했다. 탑 꼭대기에 구조 신호기가 있었다. 신호를 보내고 기다렸다.\n\n생존했다.',
+  },
+  'survival_bridge': {
+    type: 'survival',
+    text: '다리가 등 뒤에서 무너지는 소리를 들으며 반대편에 착지했다. 추격자들은 강에 빠졌다. 탑에 도달했다.\n\n생존했다.',
+  },
+  'survival_ally': {
+    type: 'survival',
+    text: '지도는 정확했다. 생존자와 함께 탑 핵심 구역에 도달해 비상 탈출 코드를 입력했다.\n\n생존했다.',
+  },
+  'survival_hospital_exit': {
+    type: 'survival',
+    text: '1층 로비에서 구조대와 마주쳤다. 옥상에서 헬기를 기다리던 사람들은 결국 대피하지 못했다는 걸 나중에 알았다.\n\n생존했다.',
+  },
+  'survival_basement': {
+    type: 'survival',
+    text: 'B2 창고에는 병원 전용 지하 터널이 있었다. 메모를 남긴 전 환자는 이 병원에서 오래 입원했던 사람이었다. 터널 끝에 구조대가 있었다.\n\n생존했다.',
+  },
+  'survival_subway_roof': {
+    type: 'survival',
+    text: '지붕 위를 기어가 다음 역 플랫폼으로 뛰어내렸다. 역무원이 달려왔다. 당신은 살아남은 유일한 승객이었다.\n\n생존했다.',
+  },
+  'survival_rail_shelter': {
+    type: 'survival',
+    text: '대피 공간 벽에 몸을 붙이자 열차가 굉음을 내며 지나갔다. 바람에 귀가 먹먹했다. 열차가 사라지고 역까지 걸어갔다.\n\n생존했다.',
+  },
+  'survival_lab_escape': {
+    type: 'survival',
+    text: 'USB를 쫓아 요원들이 흩어졌다. 비어있는 통로로 비상구에 도달했다. 지상에 나오자 언론과 카메라가 기다리고 있었다.\n\n생존했다.',
+  },
+  'survival_protocol_off': {
+    type: 'survival',
+    text: '박사의 생년월일이 맞았다. 프로토콜이 해제되며 격리 셔터가 열렸다. 비상구를 통해 탈출했다.\n\n생존했다.',
+  },
+
+  // ════════════════════════════════════════════════════════════
+  //  사망 엔딩
+  // ════════════════════════════════════════════════════════════
+  'death_waiting': {
+    type: 'death',
+    text: '이유를 묻는 사이 노인이 눈을 감았다. 열쇠가 어디 있는지 알 수 없었다. 가스가 차오르기 시작했다.\n\n살아남지 못했다.',
+  },
+  'death_trap': {
+    type: 'death',
+    text: '군인의 장비 가방을 열자 부비트랩이 터졌다. 군인은 미리 쓰러져 있었던 것이 아니었다.\n\n살아남지 못했다.',
+  },
+  'death_outnumbered': {
+    type: 'death',
+    text: '뒷문을 열자마자 세 명이 기다리고 있었다. 포위된 채로 끌려갔다.\n\n살아남지 못했다.',
+  },
+  'death_discovered': {
+    type: 'death',
+    text: '너무 오래 숨을 참았다. 기침이 터져 나왔다. 침대가 뒤집혔다.\n\n살아남지 못했다.',
+  },
+  'death_followed': {
+    type: 'death',
+    text: '발자국은 지하실로 이어졌다. 계단을 내려가는 순간 등 뒤에서 문이 잠겼다.\n\n살아남지 못했다.',
+  },
+  'death_laser': {
+    type: 'death',
+    text: '타이밍이 0.2초 늦었다. 경보음과 함께 셔터가 내려왔다.\n\n살아남지 못했다.',
+  },
+  'death_current': {
+    type: 'death',
+    text: '강물이 생각보다 빨랐다. 급류에 휩쓸렸다.\n\n살아남지 못했다.',
+  },
+  'death_shot': {
+    type: 'death',
+    text: '쪽지를 꺼내는 손이 무기처럼 보였다. "위협입니다." 무전기 소리와 함께 총성이 울렸다.\n\n살아남지 못했다.',
+  },
+  'death_karma': {
+    type: 'death',
+    text: '생존자를 밀치고 지도를 빼앗았다. 지도는 가짜였다. 함정으로 이어지는 길이었다. 혼자 남은 당신을 구해줄 사람은 없었다.\n\n살아남지 못했다.',
+  },
+  'death_helicopter': {
+    type: 'death',
+    text: '옥상에 도착했을 때 헬기는 이미 떠난 뒤였다. 계단도 불길에 막혔다.\n\n살아남지 못했다.',
+  },
+  'death_fall': {
+    type: 'death',
+    text: '3층 창문에서 뛰어내렸다. 착지 순간 발목이 부러졌다. 혼자 움직일 수 없었다.\n\n살아남지 못했다.',
+  },
+  'death_electrocuted': {
+    type: 'death',
+    text: '창문 틈으로 나가는 순간 끊어진 전선에 손이 닿았다. 비상전원은 아직 살아있었다.\n\n살아남지 못했다.',
+  },
+  'death_train': {
+    type: 'death',
+    text: '400m는 너무 멀었다. 열차가 따라잡았다.\n\n살아남지 못했다.',
+  },
+  'death_detained': {
+    type: 'death',
+    text: '격리 처리 구역으로 끌려갔다. 그 이후의 일은 기록되지 않았다.\n\n살아남지 못했다.',
+  },
+  'death_shutdown': {
+    type: 'death',
+    text: '전원을 끊자 소각 시스템이 즉시 활성화됐다. 비상전원이 따로 연결되어 있었다.\n\n살아남지 못했다.',
+  },
+};
+
+// 시작 페이지 풀 — 여기에 ID를 추가하면 랜덤 시작 후보가 늘어남
+const START_IDS = ['start_1', 'start_2', 'start_3', 'start_4', 'start_5', 'start_6'];
+
+// ================================================================
+//  GAME STATE
+// ================================================================
+const state = {
+  mode: null,
+  p1: null,
+  p2: null,
+};
+
+function newPlayer(pageId) {
+  return { pageId, turns: 1, done: false, survived: false, finishTurn: null };
+}
+
+// ================================================================
+//  SCREEN
+// ================================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function showMenu() { showScreen('menu-screen'); }
+
+// ================================================================
+//  START
+// ================================================================
+function startGame(mode) {
+  state.mode = mode;
+  const startId = START_IDS[Math.floor(Math.random() * START_IDS.length)];
+
+  if (mode === '1p') {
+    state.p1 = newPlayer(startId);
+    render1P();
+    showScreen('game1p-screen');
+  } else {
+    state.p1 = newPlayer(startId);
+    state.p2 = newPlayer(startId);  // 같은 시작 페이지
+    render2P(1);
+    render2P(2);
+    showScreen('game2p-screen');
+  }
+}
+
+// ================================================================
+//  1인용 렌더 / 선택
+// ================================================================
+function render1P() {
+  const page = PAGES[state.p1.pageId];
+  document.getElementById('turn-1p').textContent = state.p1.turns;
+  document.getElementById('story-1p').textContent = page.text;
+
+  const choicesEl = document.getElementById('choices-1p');
+  if (page.type === 'story') {
+    choicesEl.style.display = 'flex';
+    document.getElementById('text-a-1p').textContent = page.choiceA.text;
+    document.getElementById('text-b-1p').textContent = page.choiceB.text;
+  } else {
+    choicesEl.style.display = 'none';
+    setTimeout(show1PResult, 1800);
+  }
+}
+
+function choose1P(choice) {
+  const page = PAGES[state.p1.pageId];
+  if (page.type !== 'story') return;
+  state.p1.pageId = (choice === 'A') ? page.choiceA.next : page.choiceB.next;
+  state.p1.turns++;
+  render1P();
+}
+
+function show1PResult() {
+  const page = PAGES[state.p1.pageId];
+  const survived = page.type === 'survival';
+  const h = document.getElementById('r1p-heading');
+  h.textContent    = survived ? '생존 성공' : '사망';
+  h.className      = 'result-heading ' + (survived ? 'r-survived' : 'r-dead');
+  document.getElementById('r1p-sub').textContent = `${state.p1.turns - 1}턴 생존`;
+  showScreen('result1p-screen');
+}
+
+// ================================================================
+//  2인용 렌더 / 선택
+// ================================================================
+function render2P(num) {
+  const ps     = num === 1 ? state.p1 : state.p2;
+  const page   = PAGES[ps.pageId];
+  const suffix = `p${num}`;
+
+  document.getElementById(`turn-${suffix}`).textContent     = ps.turns;
+  document.getElementById(`story-${suffix}`).textContent    = page.text;
+
+  const choicesEl = document.getElementById(`choices-${suffix}`);
+
+  if (page.type === 'story' && !ps.done) {
+    choicesEl.style.display = 'flex';
+    document.getElementById(`text-a-${suffix}`).textContent = page.choiceA.text;
+    document.getElementById(`text-b-${suffix}`).textContent = page.choiceB.text;
+  } else if (!ps.done) {
+    ps.done       = true;
+    ps.survived   = page.type === 'survival';
+    ps.finishTurn = ps.turns;
+    choicesEl.style.display = 'none';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'ending-status ' + (ps.survived ? 'ended-survived' : 'ended-dead');
+    overlay.textContent = ps.survived ? '생존 성공' : '사망';
+    choicesEl.parentNode.insertBefore(overlay, choicesEl);
+
+    checkBothDone();
+  }
+}
+
+function choose2P(num, choice) {
+  const ps = num === 1 ? state.p1 : state.p2;
+  if (ps.done) return;
+  const page = PAGES[ps.pageId];
+  if (page.type !== 'story') return;
+  ps.pageId = (choice === 'A') ? page.choiceA.next : page.choiceB.next;
+  ps.turns++;
+  render2P(num);
+}
+
+function checkBothDone() {
+  if (!state.p1.done || !state.p2.done) return;
+  setTimeout(show2PResult, 1000);
+}
+
+function show2PResult() {
+  const p1 = state.p1, p2 = state.p2;
+  const h  = document.getElementById('r2p-heading');
+
+  document.getElementById('r2p-p1').textContent =
+    `${p1.survived ? '생존' : '사망'} · ${p1.finishTurn - 1}턴`;
+  document.getElementById('r2p-p2').textContent =
+    `${p2.survived ? '생존' : '사망'} · ${p2.finishTurn - 1}턴`;
+
+  let winner = 0;
+
+  if (p1.survived && p2.survived) {
+    // 둘 다 생존 → 먼저 끝낸(턴이 적은) 쪽 승리
+    if      (p1.finishTurn < p2.finishTurn) winner = 1;
+    else if (p2.finishTurn < p1.finishTurn) winner = 2;
+  } else if (p1.survived && !p2.survived) {
+    winner = 1;
+  } else if (!p1.survived && p2.survived) {
+    winner = 2;
+  } else {
+    // 둘 다 사망 → 더 많은 턴 생존한 쪽 승리
+    if      (p1.finishTurn > p2.finishTurn) winner = 1;
+    else if (p2.finishTurn > p1.finishTurn) winner = 2;
+  }
+
+  if (winner) {
+    h.textContent = `Player ${winner} 승리`;
+    h.className   = 'result-heading r-winner';
+  } else {
+    h.textContent = '무승부';
+    h.className   = 'result-heading r-draw';
+  }
+
+  showScreen('result2p-screen');
+}
+
+// ================================================================
+//  키보드 입력
+// ================================================================
+document.addEventListener('keydown', e => {
+  const active = document.querySelector('.screen.active');
+  if (!active) return;
+  const k = e.key.toLowerCase();
+
+  if (active.id === 'game1p-screen') {
+    if (k === 'z') choose1P('A');
+    if (k === 'x') choose1P('B');
+  } else if (active.id === 'game2p-screen') {
+    if (k === 'z') choose2P(1, 'A');
+    if (k === 'x') choose2P(1, 'B');
+    if (k === 'n') choose2P(2, 'A');
+    if (k === 'm') choose2P(2, 'B');
+  }
+});
+</script>
+</body>
+</html>
