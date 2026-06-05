@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>생존 선택</title>
+  <title>생선</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -333,7 +333,7 @@ const PAGES = {
   'start_3': {
     type: 'story',
     text: '기억이 없다. 눈을 뜨니 낯선 도시의 골목 바닥이다. 손에는 피 묻은 쪽지가 쥐어져 있고, 쪽지에는 "48시간 안에 탑을 찾아라"라고 적혀 있다. 멀리서 사이렌 소리가 가까워진다.',
-    choiceA: { text: '골목 밖으로 뛰쳐나간다',    next: 'mid_3a' },
+    choiceA: { text: '골목 밖으로 뛰쳐나간다',        next: 'mid_3a' },
     choiceB: { text: '쪽지를 더 자세히 살펴본다', next: 'mid_3b' },
   },
 
@@ -365,8 +365,8 @@ const PAGES = {
   'mid_2a2': {
     type: 'story',
     text: '"실험체 번호예요. 우리 탈출했어요." 남자가 울기 시작한다. 그때 산장 유리창이 깨진다. 누군가 진입 중이다.',
-    choiceA: { text: '소녀를 안고 뒷문으로 탈출한다', next: 'survival_escape_together' },
-    choiceB: { text: '식칼을 들고 맞선다',              next: 'death_outnumbered'        },
+    choiceA: { text: '소녀를 안고 뒷문으로 탈출한다',   next: 'survival_escape_together' },
+    choiceB: { text: '식칼을 들고 맞선다',               next: 'death_outnumbered'        },
   },
   'mid_2b': {
     type: 'story',
@@ -377,14 +377,14 @@ const PAGES = {
   'mid_2b2': {
     type: 'story',
     text: '식칼을 들자 문이 완전히 열리며 — 침묵. 아무것도 없다. 폭풍에 잠금이 풀린 것이었다. 그런데 바닥에 당신 것이 아닌 발자국이 찍혀 있다.',
-    choiceA: { text: '발자국을 따라간다',                 next: 'death_followed' },
+    choiceA: { text: '발자국을 따라간다',              next: 'death_followed' },
     choiceB: { text: '문을 잠그고 날이 밝기를 기다린다', next: 'survival_dawn'   },
   },
   'mid_3a': {
     type: 'story',
     text: '텅 빈 광장이 펼쳐진다. 도시 전체가 대피한 듯 고요하다. 광장 끝에 탑이 보인다. 하지만 입구 앞에 무장한 사람들이 서 있다.',
-    choiceA: { text: '당당히 걸어가 쪽지를 보여준다', next: 'survival_facility' },
-    choiceB: { text: '돌아서 다른 입구를 찾는다',      next: 'mid_3a2'           },
+    choiceA: { text: '당당히 걸어가 쪽지를 보여준다',  next: 'survival_facility' },
+    choiceB: { text: '돌아서 다른 입구를 찾는다',       next: 'mid_3a2'           },
   },
   'mid_3a2': {
     type: 'story',
@@ -395,14 +395,14 @@ const PAGES = {
   'mid_3b': {
     type: 'story',
     text: '쪽지 뒷면에 지도가 있다. 붉은 선 "빠른 길"과 파란 선 "안전한 길". 골목 입구에서 발소리가 가까워진다.',
-    choiceA: { text: '붉은 선 — 빠른 길로 달린다',    next: 'mid_3b2' },
-    choiceB: { text: '파란 선 — 안전한 길을 택한다', next: 'mid_3b3' },
+    choiceA: { text: '붉은 선 — 빠른 길로 달린다',    next: 'mid_3b2'       },
+    choiceB: { text: '파란 선 — 안전한 길을 택한다', next: 'mid_3b3'       },
   },
   'mid_3b2': {
     type: 'story',
     text: '빠른 길은 무너진 다리 위를 지난다. 반쯤 부서진 다리를 건너려는 순간 뒤에서 총성이 들린다.',
-    choiceA: { text: '전속력으로 다리를 건넌다',           next: 'survival_bridge' },
-    choiceB: { text: '다리 밑으로 뛰어내려 강을 헤엄친다', next: 'death_current'   },
+    choiceA: { text: '전속력으로 다리를 건넌다',        next: 'survival_bridge' },
+    choiceB: { text: '다리 밑으로 뛰어내려 강을 헤엄친다', next: 'death_current' },
   },
   'mid_3b3': {
     type: 'story',
@@ -526,7 +526,7 @@ function startGame(mode) {
     showScreen('game1p-screen');
   } else {
     state.p1 = newPlayer(startId);
-    state.p2 = newPlayer(startId);
+    state.p2 = newPlayer(startId);  // 같은 시작 페이지
     render2P(1);
     render2P(2);
     showScreen('game2p-screen');
@@ -564,8 +564,8 @@ function show1PResult() {
   const page = PAGES[state.p1.pageId];
   const survived = page.type === 'survival';
   const h = document.getElementById('r1p-heading');
-  h.textContent = survived ? '생존 성공' : '사망';
-  h.className   = 'result-heading ' + (survived ? 'r-survived' : 'r-dead');
+  h.textContent    = survived ? '생존 성공' : '사망';
+  h.className      = 'result-heading ' + (survived ? 'r-survived' : 'r-dead');
   document.getElementById('r1p-sub').textContent = `${state.p1.turns - 1}턴 생존`;
   showScreen('result1p-screen');
 }
@@ -578,8 +578,8 @@ function render2P(num) {
   const page   = PAGES[ps.pageId];
   const suffix = `p${num}`;
 
-  document.getElementById(`turn-${suffix}`).textContent  = ps.turns;
-  document.getElementById(`story-${suffix}`).textContent = page.text;
+  document.getElementById(`turn-${suffix}`).textContent     = ps.turns;
+  document.getElementById(`story-${suffix}`).textContent    = page.text;
 
   const choicesEl = document.getElementById(`choices-${suffix}`);
 
